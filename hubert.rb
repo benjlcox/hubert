@@ -4,26 +4,26 @@ require 'hue'
 require './env.rb'
 
 helpers do 
-	def nest(data)
+  def nest(data)
 
-	end
+  end
 
-	def hue(data)
-		case data[1]
-		when 'on'
-			#turn lights on
-			response = "I have turned on the lights"
-		when 'off'
-			#turn lights off
-			response = "I have turned off the lights"
-		when 'status'
-			#show status
-			response = "The lights are something"
-		else
-			#else shit
-			response = "Iunno, lights or something"
-		end
-	end
+  def hue(data)
+    case data[1]
+    when 'on'
+      #turn lights on
+      response = "I have turned on the lights"
+    when 'off'
+      #turn lights off
+      response = "I have turned off the lights"
+    when 'status'
+      #show status
+      response = "The lights are something"
+    else
+      #else shit
+      response = "Iunno, lights or something"
+    end
+  end
 
 	def error(instruction)
 		reply("Sorry, you need to tell me what to do with #{instruction}")
@@ -64,6 +64,4 @@ get '/sms' do
 		reply("Sorry, don't know what the means")
 		puts 'case => else'
 	end
-
-	
 end
