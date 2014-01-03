@@ -31,7 +31,6 @@ helpers do
 
     def reply(body)
     	puts "Sending response."
-		sid = "AC5328128ca782cfad1d1b621ab0a894b2"
 		@client = Twilio::REST::Client.new ENV['twilio_sid'], ENV['twilio_token']
 		@client.account.messages.create(
 			:from => '+16137071125',
