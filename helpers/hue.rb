@@ -1,4 +1,4 @@
-hue_client = Hue::Client.new
+@hue_client = Hue::Client.new
 
 def hue_io(state)
   io = true unless state === "off"
