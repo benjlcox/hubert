@@ -1,9 +1,9 @@
 require 'sinatra'
 require 'twilio-ruby'
 require 'hue'
-require './env.rb' #API Credentials
-require './helpers/hue.rb' #Hue action methods
-require './helpers/scheduler.rb' #the Scheduler 
+require_relative 'env.rb' #API Credentials
+require_relative 'helpers/hue.rb' #Hue action methods
+require_relative 'helpers/scheduler.rb' #the Scheduler 
 
 helpers do 
   def reply(body)
