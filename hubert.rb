@@ -5,6 +5,8 @@ require_relative 'env.rb' #API Credentials
 require_relative 'helpers/hue.rb' #Hue action methods
 require_relative 'helpers/scheduler.rb' #the Scheduler 
 
+set :bind, '192.168.2.25'
+
 helpers do 
   def reply(body)
     puts "Sending reply => #{body}."
