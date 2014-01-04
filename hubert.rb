@@ -1,9 +1,21 @@
 require 'sinatra'
 require 'twilio-ruby'
 require 'hue'
-require './env.rb'
+require './env.rb' #API Credentials
+require './helpers/hue.rb' #Hue action methods
+require './helpers/scheduler.rb' #the Scheduler 
 
 helpers do 
+  def reply(body)
+    puts "Sending reply => #{body}."
+		twilio_client = Twilio::REST::Client.new ENV['twilio_sid'], ENV['twilio_token']
+		twilio_client.account.messages.create(:from => '+16137071125', :to => params[:From], :body => "#{body}")
+  end
+
+  def error(instruction)
+    reply("Sorry, you need to tell me what to do with #{instruction}")
+  end
+
   def nest(data)
 
   end
@@ -11,57 +23,37 @@ helpers do
   def hue(data)
     case data[1]
     when 'on'
-      #turn lights on
-      response = "I have turned on the lights"
+      hue_io('on')
+      reply("I have turned on the lights")
     when 'off'
-      #turn lights off
-      response = "I have turned off the lights"
+      hue_io('off')
+      reply("I have turned off the lights")
     when 'status'
       #show status
-      response = "The lights are something"
+      reply("The lights are something")
     else
       #else shit
-      response = "Iunno, lights or something"
+      reply("Iunno, lights or something")
     end
   end
-
-	def error(instruction)
-		reply("Sorry, you need to tell me what to do with #{instruction}")
-    end
-
-    def reply(body)
-    	puts "Sending response."
-		@client = Twilio::REST::Client.new ENV['twilio_sid'], ENV['twilio_token']
-		@client.account.messages.create(
-			:from => '+16137071125',
-	  		:to => params[:From],
-	  		:body => "#{body}"
-		)
-    end
 end
 
 get '/sms' do
-	puts "Received sms from #{params[:From]} that says #{params[:Body]} - splitting now"
+	puts "Received sms from #{params[:From]} that says #{params[:Body]}"
 	sms = params[:Body].downcase.split(" ")
 
-	case sms[0]
+  case sms[0]
 	when "hello"
 		reply("Good day, Sir.")
-		puts 'case => Hello'
 	when "lights"
 		if sms[1] then hue(sms) else error("lights") end
-		puts 'case => lights'
 	when "nest"
 		reply("Thermostat")
-		puts 'case => nest'
 	when "remind"
 		#reminder method
-		puts 'case => remind'
 	when "schedule"
 		#scheduler method
-		puts 'case => schedule'
 	else
 		reply("Sorry, don't know what the means")
-		puts 'case => else'
 	end
 end
