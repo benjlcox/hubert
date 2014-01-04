@@ -57,3 +57,8 @@ get '/sms' do
 		reply("Sorry, don't know what the means")
 	end
 end
+
+get '/log' do
+  content_type :txt
+  IO.popen('tail -f some.log')
+end
