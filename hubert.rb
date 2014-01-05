@@ -50,7 +50,7 @@ helpers do
 
   #Support functions
   def hue_io(state)
-    if state === "on" io = true else io = false end
+    if state === "on" then io = true else io = false end
     @hue_client.lights.each do |light|
       light.on = io
     end
