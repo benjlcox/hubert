@@ -7,7 +7,7 @@ require_relative 'helpers/scheduler.rb' #the Scheduler
 #set :bind, '192.168.2.25'
 
 helpers do 
-
+  
   #SMS Replies
   def reply(body)
     puts "Sending reply => #{body}."
@@ -25,7 +25,7 @@ helpers do
     when 'ip'
       reply("My ip address is #{request.host}")
     when 'instructions'
-      reply("Hello - Lights (on,off,up,down,status) - Nest - Info (ip,instructions)")
+      reply("Hello - Lights (on,off,up,down,status,color) - Nest - Info (ip,instructions)")
     end
   end
 
@@ -49,9 +49,7 @@ helpers do
       hue_bri(128)
       reply("I have turned the lights down")
     when 'colour', 'color'
-      color = sms[2].to_i
-      if color && color >= 0 && color <= 65535
-        hue_color(color)
+      if hue_colour(sms[2].to_i) === true
         reply("I have set the lights to #{sms[2]}")
       else
         reply("I need a hue between 0 and 65535. Remember, both 0 and 65535 are red, 25500 is green and 46920 is blue")
@@ -60,6 +58,12 @@ helpers do
       info = hue_status
       info.each do |i|
         reply(i)
+      end
+    when 'preset'
+      if hue_preset(sms[2]) === true
+        reply("Lights have been changed to preset #{sms[2]}")
+      else
+        reply("I don't know the #{name} preset")
       end
     else
       error(sms[1])
@@ -88,14 +92,28 @@ helpers do
     return info
   end
 
-  def hue_color(color)
-    @hue_client.lights.each do |light|
-      light.set_state({:hue => color})
+  def hue_colour(colour)
+    if colour >= 0 && colour <= 65535
+      @hue_client.lights.each do |light|
+        light.set_state({:hue => colour})
+      end
+      return true
+    else
+      return false
     end
   end
 
   def hue_preset(name)
-    
+    hue_presets = {:relax => [13157,13157,13157], :lounge => [27156,53599,43128]}
+    preset = hue_presets[name.to_sym]
+    if !preset.nil?
+      @hue_client.lights.each do |light|
+        light.set_state({:hue => preset[light.id.to_i - 1]})
+      end
+      return true
+    else
+      return false
+    end
   end
 end
 
