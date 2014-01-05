@@ -16,17 +16,26 @@ helpers do
   end
 
   def error(instruction)
-    reply("Sorry, you need to tell me what to do with #{instruction}")
+    reply("Sorry, the following instruction was incomplete or doesn't exist: #{instruction}")
   end
 
   #Core functions
-  def nest(data)
+  def info(sms)
+    case sms[1]
+    when 'ip'
+      reply("My ip address is #{request.host}")
+    when 'instructions'
+      reply("Hello - Lights (on,off,up,down,status) - Nest - Info (ip,instructions)")
+    end
+  end
+
+  def nest(sms)
 
   end
 
-  def hue(data)
+  def hue(sms)
     @hue_client = Hue::Client.new
-    case data[1]
+    case sms[1]
     when 'on'
       hue_io('on')
       reply("I have turned on the lights")
@@ -39,12 +48,21 @@ helpers do
     when 'down'
       hue_bri(128)
       reply("I have turned the lights down")
+    when 'colour', 'color'
+      color = sms[2].to_i
+      if color && color >= 0 && color <= 65535
+        hue_color(color)
+        reply("I have set the lights to #{sms[2]}")
+      else
+        reply("I need a hue between 0 and 65535. Remember, both 0 and 65535 are red, 25500 is green and 46920 is blue")
+      end
     when 'status'
-      #show status
-      reply("The lights are something")
+      info = hue_status
+      info.each do |i|
+        reply(i)
+      end
     else
-      #else shit
-      reply("Iunno, lights or something")
+      error(sms[1])
     end
   end
 
@@ -61,6 +79,24 @@ helpers do
       light.set_state({:bri => level})
     end
   end
+
+  def hue_status()
+    info = []
+    @hue_client.lights.each do |light|
+      info << "id = #{light.id} | on? = #{light.on?} | Hue = #{light.hue} | Brightness = #{light.brightness}"
+    end
+    return info
+  end
+
+  def hue_color(color)
+    @hue_client.lights.each do |light|
+      light.set_state({:hue => color})
+    end
+  end
+
+  def hue_preset(name)
+    
+  end
 end
 
 #Routes
@@ -76,6 +112,8 @@ get '/sms' do
 		if sms[1] then hue(sms) else error("lights") end
 	when "nest"
 		reply("Thermostat")
+  when "info"
+    if sms[1] then info(sms) else error("info") end
 	when "remind"
 		#reminder method
 	when "schedule"
