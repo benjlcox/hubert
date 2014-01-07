@@ -2,7 +2,6 @@ require 'sinatra'
 require 'twilio-ruby'
 require 'hue'
 require_relative 'env.rb' #API Credentials
-require_relative 'loop.rb'
 require_relative 'helpers/scheduler.rb' #the Scheduler 
 
 #set :bind, '192.168.2.25'
