@@ -2,6 +2,7 @@ require 'sinatra'
 require 'twilio-ruby'
 require 'hue'
 require_relative 'env.rb' #API Credentials
+require_relative 'loop.rb'
 require_relative 'helpers/scheduler.rb' #the Scheduler 
 
 #set :bind, '192.168.2.25'
@@ -26,6 +27,8 @@ helpers do
       reply("My ip address is #{request.host}")
     when 'instructions'
       reply("Hello - Lights (on,off,up,down,status,color) - Nest - Info (ip,instructions)")
+    else
+      error(sms[1])
     end
   end
 
@@ -35,6 +38,7 @@ helpers do
 
   def hue(sms)
     @hue_client = Hue::Client.new
+
     case sms[1]
     when 'on'
       hue_io('on')
@@ -65,6 +69,8 @@ helpers do
       else
         reply("I don't know the #{name} preset")
       end
+    when 'flow'
+      hue_flow(sms[2])
     else
       error(sms[1])
     end
@@ -114,6 +120,23 @@ helpers do
     else
       return false
     end
+  end
+
+  def hue_flow(state)
+    Thread.new{
+      until state === false
+        h = @hue_client.lights[Random.rand(0..2)]
+        c = Random.rand(0..65535)
+        t = Time.now
+        begin
+          puts "Light #{h.id} changing to #{c} at #{Time.now}"
+          h.set_state({:hue => c, :transitiontime => 50})
+        rescue
+          puts "Something fucky happened => Light #{h.id} changing to #{c} at #{Time.now}"
+        end
+        sleep 4 
+      end
+    }
   end
 end
 
