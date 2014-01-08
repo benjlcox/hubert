@@ -22,7 +22,8 @@ class Schedule
 end
 
 DataMapper.finalize
-DataMapper.auto_migrate!
+#DataMapper.auto_migrate!
+# ^^ This drops any table with the same name and rebuilds them with that schema, which is cool but much data. So lost. Wow.
 
 helpers do 
 
@@ -44,6 +45,11 @@ helpers do
       reply("My ip address is #{request.host}")
     when 'instructions'
       reply("Hello - Lights (on,off,up,down,status,color) - Nest - Info (ip,instructions)")
+    when 'db'
+      records = Schedule.all(:executed => false)
+      records.each do |r|
+        reply(r)
+      end
     else
       error(sms[1])
     end
