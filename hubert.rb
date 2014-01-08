@@ -1,18 +1,36 @@
 require 'sinatra'
+require 'data_mapper'
+require 'sqlite3'
 require 'twilio-ruby'
 require 'hue'
 require_relative 'env.rb' #API Credentials
-require_relative 'helpers/scheduler.rb' #the Scheduler 
 
 #set :bind, '192.168.2.25'
 
+#Database loading and basic models
+
+DataMapper.setup(:default, 'sqlite:///Users/Ben/hubert/hubert_db.db')
+
+class Schedule
+  include DataMapper::Resource
+
+  property :id,         Serial    
+  property :time,       Text    
+  property :command,    Text      
+  property :requester,  Text  
+  property :executed,   Boolean
+end
+
+DataMapper.finalize
+DataMapper.auto_migrate!
+
 helpers do 
-  
+
   #SMS Replies
   def reply(body)
     puts "Sending reply => #{body}."
-		twilio_client = Twilio::REST::Client.new ENV['twilio_sid'], ENV['twilio_token']
-		twilio_client.account.messages.create(:from => '+16137071125', :to => params[:From], :body => "#{body}")
+    twilio_client = Twilio::REST::Client.new ENV['twilio_sid'], ENV['twilio_token']
+    twilio_client.account.messages.create(:from => '+16137071125', :to => params[:From], :body => "#{body}")
   end
 
   def error(instruction)
@@ -76,6 +94,27 @@ helpers do
   end
 
   #Support functions
+  def schedule(time_num,time_unit,command, requester)
+    actual_command = ""
+    (3..command.length - 1).each do |n|
+      actual_command += "#{command[n]} "
+    end
+    time = timely(time_num,time_unit)
+    @task = Schedule.create({:time => time, :command => actual_command.chomp(" "), :requester => requester})
+  end
+
+  def timely(time_num,time_unit)
+    current_time = Time.now
+    case time_unit
+    when "second", "seconds"
+      future_time = current_time + time_num.to_i
+    when "minute","minutes"
+      future_time = current_time + (time_num.to_ * 60)
+    when "hour","hours"
+      future_time = current_time + ((time_num.to_i * 60) * 60)
+    end
+  end
+
   def hue_io(state)
     if state === "on" then io = true else io = false end
     @hue_client.lights.each do |light|
@@ -120,45 +159,28 @@ helpers do
       return false
     end
   end
-
-  def hue_flow(state)
-    Thread.new{
-      until state === false
-        h = @hue_client.lights[Random.rand(0..2)]
-        c = Random.rand(0..65535)
-        t = Time.now
-        begin
-          puts "Light #{h.id} changing to #{c} at #{Time.now}"
-          h.set_state({:hue => c, :transitiontime => 50})
-        rescue
-          puts "Something fucky happened => Light #{h.id} changing to #{c} at #{Time.now}"
-        end
-        sleep 4 
-      end
-    }
-  end
 end
 
 #Routes
 
 get '/sms' do
-	puts "Received sms from #{params[:From]} that says #{params[:Body]}"
-	sms = params[:Body].downcase.split(" ")
+  puts "Received sms from #{params[:From]} that says #{params[:Body]}"
+  sms = params[:Body].downcase.split(" ")
 
   case sms[0]
-	when "hello"
-		reply("Good day, Sir.")
-	when "lights"
-		if sms[1] then hue(sms) else error("lights") end
-	when "nest"
-		reply("Thermostat")
+  when "hello"
+    reply("Good day, Sir.")
+  when "lights"
+    if sms[1] then hue(sms) else error("lights") end
+  when "nest"
+    reply("Thermostat")
   when "info"
     if sms[1] then info(sms) else error("info") end
-	when "remind"
-		#reminder method
-	when "schedule"
-		#scheduler method
-	else
-		reply("Sorry, don't know what the means")
-	end
+  when "remind"
+    #reminder method
+  when "schedule"
+    schedule(sms[1],sms[2],sms,params[:From])
+  else
+    reply("Sorry, don't know what the means")
+  end
 end
