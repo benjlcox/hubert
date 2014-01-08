@@ -1,6 +1,15 @@
-require 'active_record'
+require 'data_mapper'
 
-ActiveRecord::Base.establish_connection(
-  :adapter => 'sqlite3',
-  :database =>  'hubert_db.db'
-)
+DataMapper.setup(:default, 'sqlite:///Users/Ben/hubert/hubert_db.db')
+
+class Schedule
+  include DataMapper::Resource
+
+  property :id,         Serial    
+  property :time,       Text    
+  property :command,    Text      
+  property :requester,  Text  
+  property :executed,   Boolean
+end
+
+DataMapper.finalize
