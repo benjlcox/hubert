@@ -1,22 +1,14 @@
-require 'data_mapper'
+require 'sinatra/activerecord'
 require 'net/http'
 require_relative 'env.rb'
 
 #Connect and load database
 
-DataMapper.setup(:default, 'sqlite:///Users/Ben/hubert/hubert_db.db')
+set :database, "sqlite3:///hubert.sqlite3"
 
-class Schedule
-  include DataMapper::Resource
-
-  property :id,         Serial    
-  property :time,       Text    
-  property :command,    Text      
-  property :requester,  Text  
-  property :executed,   Boolean
+class Schedule < ActiveRecord::Base
+  validates_presence_of :command
 end
-
-DataMapper.finalize
 
 #Twilio helper stuff
 
@@ -38,9 +30,6 @@ loop do
   @Tasks = Schedule.all(:executed => false)
 
   @Tasks.each do |task|
-    if Time.now > task.time
-      uri = URI('http://localhost:4567/sms')
-      uri.query = URI.encode_www_form({ :Body => task.command,:From => task.requester })
-      Net::HTTP.get(uri)
+    reply()
     end
 end

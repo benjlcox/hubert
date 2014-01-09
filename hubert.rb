@@ -1,6 +1,5 @@
 require 'sinatra'
-require 'data_mapper'
-require 'sqlite3'
+require 'sinatra/activerecord'
 require 'twilio-ruby'
 require 'hue'
 require_relative 'env.rb' #API Credentials
@@ -9,21 +8,11 @@ require_relative 'env.rb' #API Credentials
 
 #Database loading and basic models
 
-DataMapper.setup(:default, 'sqlite:///Users/Ben/hubert/hubert_db.db')
+set :database, "sqlite3:///hubert.sqlite3"
 
-class Schedule
-  include DataMapper::Resource
-
-  property :id,         Serial    
-  property :time,       Text    
-  property :command,    Text      
-  property :requester,  Text  
-  property :executed,   Boolean
+class Schedule < ActiveRecord::Base
+  validates_presence_of :command
 end
-
-DataMapper.finalize
-#DataMapper.auto_migrate!
-# ^^ This drops any table with the same name and rebuilds them with that schema, which is cool but much data. So lost. Wow.
 
 helpers do 
 
@@ -46,9 +35,9 @@ helpers do
     when 'instructions'
       reply("Hello - Lights (on,off,up,down,status,color) - Nest - Info (ip,instructions)")
     when 'db'
-      records = Schedule.all(:executed => false)
-      records.each do |r|
-        reply(r)
+      @records = Schedule.all
+      @records.each do |r|
+        reply(r.to_s)
       end
     else
       error(sms[1])
