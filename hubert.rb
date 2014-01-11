@@ -18,6 +18,7 @@ ActiveRecord::Base.establish_connection(
   :host => "localhost",  
   :database => "hubert",
   :username => ENV['sql_username'],
+  #:password => ""
   :password => ENV['sql_password']
 ) 
 
