@@ -1,10 +1,16 @@
+require 'mysql'
+require 'open-uri'
+require 'httparty'
 require 'sinatra/activerecord'
-require 'net/http'
 require_relative 'env.rb'
 
 #Connect and load database
 
-set :database, "sqlite3:///hubert.sqlite3"
+ActiveRecord::Base.establish_connection(  
+  :adapter => "mysql",  
+  :host => "localhost",  
+  :database => "hubert"  
+) 
 
 class Schedule < ActiveRecord::Base
   validates_presence_of :command
@@ -25,11 +31,13 @@ end
 #Start the app loop
 
 loop do
-
   #Get all of the unexecuted commands
-  @Tasks = Schedule.all(:executed => false)
-
+  @Tasks = Schedule.where(executed: false)
   @Tasks.each do |task|
-    reply()
-    end
+    puts "Sending message to #{task.requester}"
+    encoded_command = URI::encode(task.command)
+    request = HTTParty.get("http://localhost:4567/sms?Body=#{encoded_command}&From=#{task.requester}&To=6137071125")
+    Schedule.update(task.id, :executed => true)
+  end
+  sleep 10
 end

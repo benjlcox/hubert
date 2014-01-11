@@ -1,19 +1,30 @@
-require 'sinatra'
-require 'sinatra/activerecord'
+puts 'Requiring Twilio...'
 require 'twilio-ruby'
+puts 'Requiring Hue...'
 require 'hue'
+puts 'Requiring Sinatra...'
+require 'sinatra'
+puts 'Requiring Sinatra/activerecord...'
+require 'sinatra/activerecord'
 require_relative 'env.rb' #API Credentials
 
 #set :bind, '192.168.2.25'
 
 #Database loading and basic models
 
-set :database, "sqlite3:///hubert.sqlite3"
+puts "Connecting to Database..."
+ActiveRecord::Base.establish_connection(  
+  :adapter => "mysql",  
+  :host => "localhost",  
+  :database => "hubert"  
+) 
 
+puts "Building models..."
 class Schedule < ActiveRecord::Base
   validates_presence_of :command
 end
 
+puts 'Defining helpers...'
 helpers do 
 
   #SMS Replies
@@ -95,7 +106,7 @@ helpers do
       actual_command += "#{command[n]} "
     end
     time = timely(time_num,time_unit)
-    @task = Schedule.create({:time => time, :command => actual_command.chomp(" "), :requester => requester})
+    Schedule.create({:time => time, :command => actual_command.chomp(" "), :requester => requester})
   end
 
   def timely(time_num,time_unit)
@@ -104,7 +115,7 @@ helpers do
     when "second", "seconds"
       future_time = current_time + time_num.to_i
     when "minute","minutes"
-      future_time = current_time + (time_num.to_ * 60)
+      future_time = current_time + (time_num.to_i * 60)
     when "hour","hours"
       future_time = current_time + ((time_num.to_i * 60) * 60)
     end
@@ -158,6 +169,7 @@ end
 
 #Routes
 
+puts 'Defining routes...'
 get '/sms' do
   puts "Received sms from #{params[:From]} that says #{params[:Body]}"
   sms = params[:Body].downcase.split(" ")
@@ -175,6 +187,7 @@ get '/sms' do
     #reminder method
   when "schedule"
     schedule(sms[1],sms[2],sms,params[:From])
+    reply("I have scheduled your command for #{sms[1]} #{sms[2]} from now.")
   else
     reply("Sorry, don't know what the means")
   end

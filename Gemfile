@@ -1,5 +1,5 @@
 gem "sinatra-activerecord"
-gem "sqlite3"
+gem "mysql"
 gem "rake"
 gem 'twilio-ruby'
 gem 'hue'
