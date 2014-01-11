@@ -32,10 +32,11 @@ end
 
 #Start the app loop
 
-print "Listening for events"
+puts "Starting Scheduler..."
 
 loop do
   #Get all of the unexecuted commands
+  puts "Getting tasks"
   @Tasks = Schedule.where(executed: false)
   @Tasks.each do |task|
     puts "Sending message to #{task.requester}"
@@ -43,6 +44,5 @@ loop do
     request = HTTParty.get("http://192.168.2.25:4567/sms?Body=#{encoded_command}&From=#{task.requester}&To=6137071125")
     Schedule.update(task.id, :executed => true)
   end
-  print "..."
   sleep 10
 end
