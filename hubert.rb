@@ -16,7 +16,9 @@ puts "Connecting to Database..."
 ActiveRecord::Base.establish_connection(  
   :adapter => "mysql",  
   :host => "localhost",  
-  :database => "hubert"  
+  :database => "hubert",
+  :username => ENV['sql_username'],
+  :password => ENV['sql_password']
 ) 
 
 puts "Building models..."

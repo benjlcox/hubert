@@ -9,7 +9,9 @@ require_relative 'env.rb'
 ActiveRecord::Base.establish_connection(  
   :adapter => "mysql",  
   :host => "localhost",  
-  :database => "hubert"  
+  :database => "hubert",
+  :username => ENV['sql_username'],
+  :password => ENV['sql_password']
 ) 
 
 class Schedule < ActiveRecord::Base
@@ -30,14 +32,17 @@ end
 
 #Start the app loop
 
+print "Listening for events"
+
 loop do
   #Get all of the unexecuted commands
   @Tasks = Schedule.where(executed: false)
   @Tasks.each do |task|
     puts "Sending message to #{task.requester}"
     encoded_command = URI::encode(task.command)
-    request = HTTParty.get("http://localhost:4567/sms?Body=#{encoded_command}&From=#{task.requester}&To=6137071125")
+    request = HTTParty.get("http://192.168.2.25:4567/sms?Body=#{encoded_command}&From=#{task.requester}&To=6137071125")
     Schedule.update(task.id, :executed => true)
   end
+  print "..."
   sleep 10
 end
